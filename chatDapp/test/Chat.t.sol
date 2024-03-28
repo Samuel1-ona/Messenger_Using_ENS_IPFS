@@ -9,40 +9,39 @@ contract CounterTest is Test {
     ENS public ens;
     Chat public chat;
 
-    address SogoAddr = address(0x477b144FbB1cE15554927587f18a27b241126FBC);
-    address BanwoAddr = address(0xe902aC65D282829C7a0c42CAe165D3eE33482b9f);
+    address SamAddr = address(0x477b144FbB1cE15554927587f18a27b241126FBC);
+    address ChisomAddr = address(0xe902aC65D282829C7a0c42CAe165D3eE33482b9f);
 
     function setUp() public {
         ens = new ENS();
         chat = new Chat(address(ens));
 
-        switchSigner(SogoAddr);
-        ens.setName("Sogo");
+        switchSigner(SamAddr);
+        ens.setName("Samuel");
 
-        switchSigner(BanwoAddr);
-        ens.setName("Banwo");
+        switchSigner(ChisomAddr);
+        ens.setName("Chisom");
     }
 
     function test_SetName() public view {
-        assertEq(ens.getNameFromAddress(SogoAddr), "Sogo");
-        assertEq(ens.getNameFromAddress(BanwoAddr), "Banwo");
+        assertEq(ens.getNameFromAddress(SamAddr), "Samuel");
+        assertEq(ens.getNameFromAddress(ChisomAddr), "Chisom");
     }
 
     function test_SendMessage() public {
-        switchSigner(SogoAddr);
-        chat.sendMessage("Banwo", "Hello");
-        assertEq(chat.getSentMessages("Banwo")[0], "Hello");
+        switchSigner(SamAddr);
+        chat.sendMessage("Chisom", "Hello are you doing");
+        assertEq(chat.getSentMessages("Chisom")[0], "Hello are you doing"));
     }
 
     function test_getMessage() public {
-        switchSigner(SogoAddr);
-        chat.sendMessage("Banwo", "Hello");
+        switchSigner(SamAddr);
+        chat.sendMessage("Chisom", "Hello are you doing");
 
-        switchSigner(BanwoAddr);
-
-        console.log("log array");        
-        console.log(chat.getChats("Sogo")[0]);
-        assertEq(chat.getChats("Sogo")[0], "Hello");
+        switchSigner(ChisomAddr);
+       
+        console.log(chat.getChats("Samuel")[0]);
+        assertEq(chat.getChats("Samuel")[0], "Hello are you doing"));
     }
 
     function switchSigner(address _newSigner) public {
@@ -55,8 +54,4 @@ contract CounterTest is Test {
         }
     }
 
-    // function testFuzz_SetNumber(uint256 x) public {
-    //     chat.setNumber(x);
-    //     assertEq(chat.number(), x);
-    // }
 }
