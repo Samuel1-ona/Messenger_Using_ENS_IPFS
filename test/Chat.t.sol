@@ -1,47 +1,99 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {Test, console} from "../lib/forge-std";
+import "forge-std/Test.sol";
 import {Chat} from "../src/Chat.sol";
 import {ENS} from "../src/ENS.sol";
 
-contract CounterTest is Test {
-    ENS public ens;
-    Chat public chat;
+contract ChatENSTest is Test {
+    ENS public dENS;
+    Chat public dChat;
 
-    address SamAddr = address(0x477b144FbB1cE15554927587f18a27b241126FBC);
-    address ChisomAddr = address(0xe902aC65D282829C7a0c42CAe165D3eE33482b9f);
+    struct ENSProfile {
+        address userAddress;
+        string name;
+        string imageUri;
+    }
+    address A = address(0xa);
+    address B = address(0xb);
 
     function setUp() public {
-        ens = new ENS();
-        chat = new Chat(address(ens));
+        //deploy facets
+        dENS = new ENS();
+        dChat = new Chat(address(dENS));
 
-        switchSigner(SamAddr);
-        ens.setName("Samuel");
-
-        switchSigner(ChisomAddr);
-        ens.setName("Chisom");
+        //make addresses
+        A = mkaddr("Account A");
+        B = mkaddr("Account B");
     }
 
-    function test_SetName() public view {
-        assertEq(ens.getNameFromAddress(SamAddr), "Samuel");
-        assertEq(ens.getNameFromAddress(ChisomAddr), "Chisom");
+    // ENS Contract TEST
+    function testSetNameRevertWith() public {
+        switchSigner(A);
+        dENS.setName("SOGO", "QGYSIUHD");
+
+        switchSigner(B);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(ENS.NAME_ALREADY_EXISTED.selector)
+        );
+
+        dENS.setName("SOGO", "DUTFDYUUY");
     }
 
-    function test_SendMessage() public {
-        switchSigner(SamAddr);
-        chat.sendMessage("Chisom", "Hello are you doing");
-        assertEq(chat.getSentMessages("Chisom")[0], "Hello are you doing"));
+    function testSetNameFromAddress() public {
+        switchSigner(A);
+        dENS.setName("SOGO", "QGYSIUHD");
+        string memory _name = dENS.getProfileFromAddress(A).name;
+
+        vm.assertEq(_name, "SOGO");
     }
 
-    function test_getMessage() public {
-        switchSigner(SamAddr);
-        chat.sendMessage("Chisom", "Hello are you doing");
+    function testSetNameFromName() public {
+        switchSigner(A);
+        dENS.setName("SOGO", "QGYSIUHD");
+        address _address = dENS.getProfileFromName("SOGO").userAddress;
 
-        switchSigner(ChisomAddr);
-       
-        console.log(chat.getChats("Samuel")[0]);
-        assertEq(chat.getChats("Samuel")[0], "Hello are you doing"));
+        vm.assertEq(_address, A);
+    }
+
+    // CHAT Contract TEST 
+
+     function testSendMesaageRevertWithReceiverDoesNotExist() public {
+        switchSigner(A);
+        dENS.setName("SOGO", "QGYSIUHD");
+
+        
+        vm.expectRevert(
+            abi.encodeWithSelector(Chat.RECEIVER_DOES_NOT_EXIST.selector)
+        );
+
+        dChat.sendMessage("SAM", "DUTFDYUUY");
+    }
+
+    function testSendMesaage() public {
+        switchSigner(A);
+        dENS.setName("SOGO", "QGYSIUHD");
+
+        switchSigner(B);
+        dENS.setName("SAM", "QGYSIUHD");
+
+
+        switchSigner(A);
+        dChat.sendMessage("SAM", "This is my message");
+
+        string memory _message = dChat.getChats("SAM")[0].message;
+
+        assertEq(_message, "This is my message");
+
+    }
+
+    function mkaddr(string memory name) public returns (address) {
+        address addr = address(
+            uint160(uint256(keccak256(abi.encodePacked(name))))
+        );
+        vm.label(addr, name);
+        return addr;
     }
 
     function switchSigner(address _newSigner) public {
@@ -53,5 +105,4 @@ contract CounterTest is Test {
             vm.startPrank(_newSigner);
         }
     }
-
 }
